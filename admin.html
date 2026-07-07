@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Habitaciones - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        
+        .header {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { margin-bottom: 10px; }
+        
+        .status {
+            background: rgba(255,255,255,0.15);
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: white;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            background: white;
+            color: #667eea;
+            transition: all 0.3s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        
+        .tabs-genero {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-genero {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .tab-genero.active { background: white; color: #667eea; }
+        .tab-genero:hover { border-color: white; }
+        
+        .genero-content { display: none; }
+        .genero-content.active { display: block; }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .alumnos-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+        .alumnos-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .alumno-item {
+            background: #f0f0f0;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: move;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+            user-select: none;
+        }
+        .alumno-item:hover { 
+            background: #e0e0e0;
+            transform: translateX(5px);
+        }
+        .alumno-item.dragging {
+            opacity: 0.5;
+            background: #ddd;
+        }
+        .alumno-nombre { font-weight: 600; color: #333; }
+        .alumno-grado { font-size: 12px; color: #999; }
+        
+        .habitaciones-section {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .categoria-habitaciones {
+            margin-bottom: 30px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .categoria-titulo {
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            background: #667eea;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .habitaciones-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .habitacion-card {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 12px;
+            min-height: 350px;
+            border: 3px dashed #ddd;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            min-width: 240px;
+            cursor: pointer;
+        }
+        .habitacion-card.drag-over {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            transform: scale(1.02);
+        }
+        
+        .habitacion-titulo {
+            font-size: 14px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+        .habitacion-capacidad {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 10px;
+            text-align: center;
+            background: #f0f0f0;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        
+        .habitacion-ocupantes {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-height: 280px;
+            border: 2px dashed rgba(102, 126, 234, 0.2);
+            padding: 8px;
+            border-radius: 8px;
+            background: rgba(102, 126, 234, 0.02);
+        }
+        
+        .ocupante {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+            cursor: grab;
+        }
+        .ocupante:active { cursor: grabbing; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .ocupante-nombre { font-weight: 600; flex: 1; }
+        .ocupante-remove {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        .ocupante-remove:hover { background: rgba(255,255,255,0.5); }
+        
+        .vacío {
+            color: #ccc;
+            font-size: 14px;
+            text-align: center;
+            padding: 40px 20px;
+            font-style: italic;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stats {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 15px;
+            color: #333;
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .stat-item {
+            padding: 10px;
+            border-left: 4px solid #667eea;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .stat-label { font-size: 12px; color: #999; }
+        .stat-value { font-size: 24px; font-weight: 700; color: #667eea; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .modal-content h2 { color: #667eea; margin-bottom: 20px; }
+        .modal-content textarea {
+            width: 100%;
+            height: 200px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: monospace;
+            margin-bottom: 10px;
+        }
+        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: #999; }
+        .close:hover { color: #333; }
+        
+        .modal-agregar { width: 500px; max-width: 90%; }
+        
+        .lista-alumnos-agregar {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .alumno-disponible {
+            padding: 12px;
+            background: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid #667eea;
+        }
+        
+        .alumno-disponible:hover {
+            background: #f0f0f0;
+            border-left-color: #764ba2;
+            transform: translateX(5px);
+        }
+        
+        input[type="file"] { display: none; }
+        
+        .sync-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🏨 Gestor de Habitaciones</h1>
+                <p>Arrastra alumnos a las habitaciones (Separado por Género)</p>
+            </div>
+            <div class="status">
+                <div id="syncStatus">🔄 Sincronizando...</div>
+            </div>
+        </div>
+
+        <div class="sync-info">
+            ℹ️ <strong>Almacenamiento en GitHub:</strong> Los cambios se guardan localmente. 
+            Usa <strong>"⬇️ Descargar JSON"</strong> y sube a GitHub manualmente, o espera a que se implemente sincronización automática.
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="cargarDatosGitHub()">🔄 Cargar desde GitHub</button>
+            <button class="btn btn-success" onclick="guardarDatos()">💾 Guardar Localmente</button>
+            <button class="btn" onclick="descargarJSON()">⬇️ Descargar JSON</button>
+            <button class="btn" onclick="cargarJSON()">⬆️ Cargar JSON</button>
+            <button class="btn btn-danger" onclick="limpiarTodo()">🗑️ Limpiar Todo</button>
+            <button class="btn" onclick="mostrarJSON()">📋 Ver JSON</button>
+            <button class="btn btn-success" onclick="exportarExcel()">📊 Exportar Excel</button>
+        </div>
+
+        <div class="tabs-genero">
+            <button class="tab-genero tab-hombres active" onclick="cambiarGenero('hombres')">👨 HOMBRES</button>
+            <button class="tab-genero tab-mujeres" onclick="cambiarGenero('mujeres')">👩 MUJERES</button>
+        </div>
+
+        <div id="genero-hombres" class="genero-content active">
+            <div class="main-grid">
+                <div class="alumnos-section">
+                    <h2>👨 Alumnos sin Asignar</h2>
+                    <div id="alumnos-hombres"></div>
+                </div>
+                <div class="habitaciones-section">
+                    <div class="categoria-habitaciones">
+                        <div class="categoria-titulo">🏫 Habitaciones de Alumnos (HDA)</div>
+                        <div class="habitaciones-grid" id="hda-hombres"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="genero-mujeres" class="genero-content">
+            <div class="main-grid">
+                <div class="alumnos-section">
+                    <h2>👩 Alumnas sin Asignar</h2>
+                    <div id="alumnos-mujeres"></div>
+                </div>
+                <div class="habitaciones-section">
+                    <div class="categoria-habitaciones">
+                        <div class="categoria-titulo">🏫 Habitaciones de Alumnas (HDA)</div>
+                        <div class="habitaciones-grid" id="hda-mujeres"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="habitaciones-section" style="margin-top: 30px;">
+            <div class="categoria-habitaciones">
+                <div class="categoria-titulo">👨‍👩‍👧 Habitaciones Matrimoniales (HM)</div>
+                <div class="habitaciones-grid" id="hm-habitaciones"></div>
+            </div>
+            <div class="categoria-habitaciones">
+                <div class="categoria-titulo">👥 Habitaciones de Padres (HDP)</div>
+                <div class="habitaciones-grid" id="hdp-habitaciones"></div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">👨 Hombres Asignados</div>
+                <div class="stat-value" id="hombres-asignados">0/0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">👩 Mujeres Asignadas</div>
+                <div class="stat-value" id="mujeres-asignadas">0/0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">🏨 Total Habitaciones HDA</div>
+                <div class="stat-value" id="total-hda">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="jsonModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <h2>📋 JSON de Distribución</h2>
+            <textarea id="jsonText" readonly></textarea>
+            <button class="btn btn-primary" onclick="copiarJSON()" style="width: 100%;">📋 Copiar al Portapapeles</button>
+        </div>
+    </div>
+
+    <!-- MODAL PARA AGREGAR ALUMNOS -->
+    <div id="agregarModal" class="modal">
+        <div class="modal-content modal-agregar">
+            <span class="close" onclick="cerrarModalAgregar()">&times;</span>
+            <h2>➕ Selecciona un Alumno</h2>
+            <p style="font-size: 12px; color: #999; margin-bottom: 15px;">Haz click derecho en una habitación para agregar</p>
+            <div id="modalContenido" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".json" onchange="procesarJSON(event)">
+
+    <script>
+        const GITHUB_URL = "https://raw.githubusercontent.com/acernar/viaje-habitaciones-2026/refs/heads/main/distribucion.json";
+
+        let alumnos = [
+    { id: 1, nombre: "Angelo José Lopez Flores", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 2, nombre: "Matias Adriano Vigo Centeno", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 3, nombre: "Maria Jose Chuquillanqui Felippe", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 4, nombre: "Domenica Alessandra Vigo Centeno", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 5, nombre: "Alessa Michelle López Cueva", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 6, nombre: "Andrea Xiomara Sopla Agüero", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 7, nombre: "Daleshka Alexandra Cerna Vallejos", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 8, nombre: "Luciana Avril Duran Angola", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 9, nombre: "Micaela Oriana Carrillo Rojas", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 10, nombre: "Paola Jimena Vera Collantes", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 11, nombre: "Paola Valentina Mudarra Mendoza", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 12, nombre: "Yanira Angie Valdez Collazos", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 13, nombre: "Mariana Alessandra Alfaro Chirinos", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 14, nombre: "Ana Bárbara Nicole Lamas Faustor", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 15, nombre: "Micaela Nicole Aragón Díaz", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 16, nombre: "Sofia Victoria Tasayco Olazabal", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 17, nombre: "Flavia Fernanda Fayó Loayza", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 18, nombre: "Macarena Isabel Steiert Quiroz", grado: "Niño Jesús", rol: "Alumno", genero: "F" },
+    { id: 19, nombre: "Maite Caroline Apaza Taco", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 20, nombre: "Kiara Nicole Peláez Tarazona", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 21, nombre: "Alexandra Domenica Valladolid Lopez", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 22, nombre: "Rafaella Denisse Lopez Fry", grado: "Niño Jesús", rol: "Alumno", genero: "F" },
+    { id: 23, nombre: "Fiama Peñaranda Silva", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 24, nombre: "Alexandra Jeannette Rondón Wong", grado: "Niño Jesús", rol: "Alumno", genero: "F" },
+    { id: 25, nombre: "Joaquin Santiago Mayta Manrique", grado: "Niño Jesús", rol: "Alumno", genero: "M" },
+    { id: 26, nombre: "Nicolas Ricardo Alayza Huby", grado: "Bien", rol: "Alumno", genero: "M" },
+    { id: 27, nombre: "Luis Pablo Aréstegui Menacho", grado: "Bien", rol: "Alumno", genero: "M" },
+    { id: 28, nombre: "Enzo Camilo Alegria Melgar", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 29, nombre: "Renzo Sebastián Florian Loza", grado: "Niño Jesús", rol: "Alumno", genero: "M" },
+    { id: 30, nombre: "Piero Alonso Perez Maynetto", grado: "Niño Jesús", rol: "Alumno", genero: "M" },
+    { id: 31, nombre: "Matias Alejandro Bazán Miranda", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 32, nombre: "Adrik Darien Palacios Mendoza", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 33, nombre: "Fabbiano David Gonzales Aliaga", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 34, nombre: "Matías Nicolás Quintanilla Villavicencio", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 35, nombre: "María Antonella Salinas Legua", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 36, nombre: "Zoemi Valeria Rivera Cano", grado: "Niño Jesús", rol: "Alumno", genero: "F" },
+    { id: 37, nombre: "Nicolaz Leandro Fernandez Valle", grado: "Bien", rol: "Alumno", genero: "M" },
+    { id: 38, nombre: "André Ken Tamashiro Díaz", grado: "Bien", rol: "Alumno", genero: "M" },
+    { id: 39, nombre: "Luz Camila Huaray Lechuga", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 40, nombre: "Flavia Alessandra Centeno Arrunategui", grado: "Niño Jesús", rol: "Alumno", genero: "F" },
+    { id: 41, nombre: "Sandro Mateo Huarcaya Sinarahua", grado: "Bien", rol: "Alumno", genero: "M" },
+    { id: 42, nombre: "Sebastian Tejada Duché", grado: "Niño Jesús", rol: "Alumno", genero: "M" },
+    { id: 43, nombre: "Ricardo Valentino Marcelo Sánchez", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 44, nombre: "Roberto Sebastián Ortega Carrasco", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 45, nombre: "Fabio Mathias Figueroa Cruz", grado: "Bien", rol: "Alumno", genero: "M" },
+    { id: 46, nombre: "Roberto Sebastián Machado Joya", grado: "Niño Jesús", rol: "Alumno", genero: "M" },
+    { id: 47, nombre: "Luis Fabricio Arcos Parimango", grado: "Bien", rol: "Alumno", genero: "M" },
+    { id: 48, nombre: "Martín Alonso Rivera Flores", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 49, nombre: "Italo Marcello Cassaró Palacios", grado: "Niño Jesús", rol: "Alumno", genero: "M" },
+    { id: 50, nombre: "Luis Joaquín Benavente Vera", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 51, nombre: "Luis Fernando Zevallos Ramirez", grado: "Bien", rol: "Alumno", genero: "M" },
+    { id: 52, nombre: "Bruno Mathias Santibañez Guerrero", grado: "Niño Jesús", rol: "Alumno", genero: "M" },
+    { id: 53, nombre: "Nicolás Ignacio Siancas Gallardo", grado: "Bien", rol: "Alumno", genero: "M" },
+    { id: 54, nombre: "Nicolas Angeles Rosemberg", grado: "Paz", rol: "Alumno", genero: "M" },
+    { id: 55, nombre: "Peggy Angelli Sánchez Muñoz", grado: "Bien", rol: "Familiar", genero: "F" },
+    { id: 56, nombre: "Evelyn Giulianna Faustor Castro", grado: "Bien", rol: "Familiar", genero: "F" },
+    { id: 57, nombre: "Nelly Carolina Silva Mendizabal", grado: "Paz", rol: "Familiar", genero: "F" },
+    { id: 58, nombre: "Brenda Kareen Agüero Oviedo", grado: "Paz", rol: "Familiar", genero: "F" },
+    { id: 59, nombre: "Aida Marleny Vera Acuña", grado: "Niño Jesús", rol: "Familiar", genero: "F" },
+    { id: 60, nombre: "Gisele Rosario Flores Del Aguila", grado: "Bien", rol: "Comité", genero: "F" },
+    { id: 61, nombre: "Sandro Claudio Huarcaya Leon", grado: "Bien", rol: "Familiar", genero: "M" },
+    { id: 62, nombre: "Sebastián Giancarlo Fayó Aguilar", grado: "Paz", rol: "Comité", genero: "M" },
+    { id: 63, nombre: "Luis Carlos Carrillo Tacuri", grado: "Bien", rol: "Familiar", genero: "M" },
+    { id: 64, nombre: "Macarena Aseneth Carrillo Rojas", grado: "Bien", rol: "Familiar", genero: "F" },
+    { id: 65, nombre: "Karen Vanessa Rojas Urrutia", grado: "Bien", rol: "Comité", genero: "F" },
+    { id: 66, nombre: "Jorge Luis Chuquillanqui Barrientos", grado: "Paz", rol: "Familiar", genero: "M" },
+    { id: 67, nombre: "Rosa Giuliana Felippe Ramirez", grado: "Paz", rol: "Comité", genero: "F" },
+    { id: 68, nombre: "Gladis Alicia Vallejos Dávila", grado: "Bien", rol: "Familiar", genero: "F" },
+    { id: 69, nombre: "Lionel Alexander Cerna Rivas", grado: "Bien", rol: "Comité", genero: "M" },
+    { id: 70, nombre: "Julia Irene Cueva Carbajal", grado: "Bien", rol: "Familiar", genero: "F" },
+    { id: 71, nombre: "María Luz Cueva Carbajal de Mejia", grado: "Paz", rol: "Comité", genero: "F" },
+    { id: 72, nombre: "Fabianna Luanhé Camayo López", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 73, nombre: "Valeria Cristina Espinoza Burga", grado: "Bien", rol: "Alumno", genero: "F" },
+    { id: 74, nombre: "Mel Luana Mori Cárdenas", grado: "Paz", rol: "Alumno", genero: "F" },
+    { id: 75, nombre: "Facundo Paredes Cuevas", grado: "Bien", rol: "Alumno", genero: "M" },
+];
+
+        let habitaciones = [
+            { id: 'HDA_01', numero: 'HDA_01', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_02', numero: 'HDA_02', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_03', numero: 'HDA_03', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_04', numero: 'HDA_04', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_05', numero: 'HDA_05', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_06', numero: 'HDA_06', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_07', numero: 'HDA_07', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_08', numero: 'HDA_08', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_09', numero: 'HDA_09', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_10', numero: 'HDA_10', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_11', numero: 'HDA_11', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_12', numero: 'HDA_12', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_13', numero: 'HDA_13', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_14', numero: 'HDA_14', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_15', numero: 'HDA_15', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_16', numero: 'HDA_16', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_17', numero: 'HDA_17', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_18', numero: 'HDA_18', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_19', numero: 'HDA_19', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_20', numero: 'HDA_20', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_21', numero: 'HDA_21', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_22', numero: 'HDA_22', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_23', numero: 'HDA_23', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_24', numero: 'HDA_24', capacidad: 2, tipo: 'HDA' },
+            { id: 'HTA_02', numero: 'HTA_02', capacidad: 3, tipo: 'HDA' },
+            { id: 'HDA_25', numero: 'HDA_25', capacidad: 2, tipo: 'HDA' },
+            { id: 'HDA_26', numero: 'HDA_26', capacidad: 2, tipo: 'HDA' },
+            { id: 'HM-01', numero: 'HM-01', capacidad: 2, tipo: 'HM' },
+            { id: 'HM-04', numero: 'HM-04', capacidad: 2, tipo: 'HM' },
+            { id: 'HM_02', numero: 'HM_02', capacidad: 3, tipo: 'HM' },
+            { id: 'HM_03', numero: 'HM_03', capacidad: 2, tipo: 'HM' },
+            { id: 'HDP_01', numero: 'HDP_01', capacidad: 3, tipo: 'HDP' },
+            { id: 'HDP_02', numero: 'HDP_02', capacidad: 2, tipo: 'HDP' },
+            { id: 'HDP_03', numero: 'HDP_03', capacidad: 2, tipo: 'HDP' },
+            { id: 'HTA_01', numero: 'HTA_01', capacidad: 3, tipo: 'HDA' }
+        ];
+
+        let distribucion = {};
+        let generoActual = 'hombres';
+
+        async function cargarDatosGitHub() {
+            try {
+                document.getElementById('syncStatus').textContent = '🔄 Cargando desde GitHub...';
+                const response = await fetch(GITHUB_URL);
+                if (response.ok) {
+                    distribucion = await response.json();
+                    localStorage.setItem('distribucion_habitaciones', JSON.stringify(distribucion));
+                    renderTodo();
+                    document.getElementById('syncStatus').textContent = '✅ Sincronizado con GitHub';
+                    alert('✅ Datos cargados desde GitHub');
+                } else {
+                    document.getElementById('syncStatus').textContent = '⚠️ No se pudo cargar de GitHub';
+                    alert('⚠️ El archivo en GitHub está vacío o no existe');
+                }
+            } catch (error) {
+                document.getElementById('syncStatus').textContent = '❌ Error en GitHub';
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        function init() {
+            document.getElementById('total-hda').textContent = habitaciones.filter(h => h.tipo === 'HDA').length;
+            cargarDatosGitHub();
+        }
+
+        function cambiarGenero(genero) {
+            generoActual = genero;
+            document.querySelectorAll('.genero-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('genero-' + genero).classList.add('active');
+            document.querySelectorAll('.tab-genero').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            renderAlumnos();
+            renderHabitacionesHDA();
+        }
+
+        function renderTodo() {
+            renderAlumnos();
+            renderHabitacionesHDA();
+            renderHabitacionesHMHDP();
+            actualizarStats();
+        }
+
+        function renderAlumnos() {
+            const asignados = new Set(Object.values(distribucion).flat());
+            const genero = generoActual === 'hombres' ? 'M' : 'F';
+            const sinAsignar = alumnos.filter(a => a.genero === genero && !asignados.has(a.id));
+            
+            const contenedorId = generoActual === 'hombres' ? 'alumnos-hombres' : 'alumnos-mujeres';
+            let html = '';
+            sinAsignar.forEach(a => {
+                html += `<div class="alumno-item" draggable="true" ondragstart="dragAlumno(event, ${a.id})">
+                    <div class="alumno-nombre">${a.nombre}</div>
+                    <div class="alumno-grado">${a.grado}</div>
+                </div>`;
+            });
+            
+            document.getElementById(contenedorId).innerHTML = html || '<div class="vacío">Todos asignados ✅</div>';
+        }
+
+        function renderHabitacionesHDA() {
+            const genero = generoActual === 'hombres' ? 'M' : 'F';
+            const contenedorId = generoActual === 'hombres' ? 'hda-hombres' : 'hda-mujeres';
+            const habitacionesHDA = habitaciones.filter(h => h.tipo === 'HDA');
+            
+            let html = '';
+            habitacionesHDA.forEach(hab => {
+                const ocupantes = distribucion[hab.id] || [];
+                let ocupantesHtml = '';
+                
+                if (ocupantes.length === 0) {
+                    ocupantesHtml = '<div class="vacío">Vacía</div>';
+                } else {
+                    ocupantes.forEach(alumnoId => {
+                        const alumno = alumnos.find(a => a.id === alumnoId);
+                        if (alumno) {
+                            ocupantesHtml += `<div class="ocupante">
+                                <span class="ocupante-nombre">${alumno.nombre}</span>
+                                <button class="ocupante-remove" onclick="removerAlumno('${hab.id}', ${alumnoId})">✕</button>
+                            </div>`;
+                        }
+                    });
+                }
+                
+                html += `<div class="habitacion-card" ondragover="dragOver(event)" ondrop="dropAlumno(event, '${hab.id}', '${genero}')" ondragleave="dragLeave(event)" oncontextmenu="abrirMenuAgregar(event, '${hab.id}', '${genero}')">
+                    <div class="habitacion-titulo">${hab.numero}</div>
+                    <div class="habitacion-capacidad">${ocupantes.length}/${hab.capacidad}</div>
+                    <div class="habitacion-ocupantes">${ocupantesHtml}</div>
+                </div>`;
+            });
+            
+            document.getElementById(contenedorId).innerHTML = html;
+        }
+
+        function renderHabitacionesHMHDP() {
+            let htmlHM = '';
+            let htmlHDP = '';
+            
+            habitaciones.forEach(hab => {
+                const ocupantes = distribucion[hab.id] || [];
+                let ocupantesHtml = '';
+                
+                if (ocupantes.length === 0) {
+                    ocupantesHtml = '<div class="vacío">Vacía</div>';
+                } else {
+                    ocupantes.forEach(alumnoId => {
+                        const alumno = alumnos.find(a => a.id === alumnoId);
+                        if (alumno) {
+                            ocupantesHtml += `<div class="ocupante">
+                                <span class="ocupante-nombre">${alumno.nombre}</span>
+                                <button class="ocupante-remove" onclick="removerAlumno('${hab.id}', ${alumnoId})">✕</button>
+                            </div>`;
+                        }
+                    });
+                }
+                
+                const tarjeta = `<div class="habitacion-card" oncontextmenu="abrirMenuAgregar(event, '${hab.id}', '')">
+                    <div class="habitacion-titulo">${hab.numero}</div>
+                    <div class="habitacion-capacidad">${ocupantes.length}/${hab.capacidad}</div>
+                    <div class="habitacion-ocupantes">${ocupantesHtml}</div>
+                </div>`;
+                
+                if (hab.tipo === 'HM') {
+                    htmlHM += tarjeta;
+                } else if (hab.tipo === 'HDP') {
+                    htmlHDP += tarjeta;
+                }
+            });
+            
+            document.getElementById('hm-habitaciones').innerHTML = htmlHM;
+            document.getElementById('hdp-habitaciones').innerHTML = htmlHDP;
+        }
+
+        function dragAlumno(e, alumnoId) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('alumnoId', alumnoId);
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+            
+            // Obtener el grid de habitaciones más cercano
+            let grid = e.currentTarget.parentElement;
+            
+            if (grid && grid.classList.contains('habitaciones-grid')) {
+                const scrollMargin = 80;
+                const mouseX = e.clientX;
+                const gridBounds = grid.getBoundingClientRect();
+                
+                // SCROLL DERECHA
+                if (mouseX > gridBounds.right - scrollMargin) {
+                    grid.scrollLeft += 25;
+                }
+                // SCROLL IZQUIERDA
+                else if (mouseX < gridBounds.left + scrollMargin) {
+                    grid.scrollLeft -= 25;
+                }
+            }
+        }
+
+        function dragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function dropAlumno(e, habitacionId, generoRequerido) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            
+            const alumnoId = parseInt(e.dataTransfer.getData('alumnoId'));
+            const alumno = alumnos.find(a => a.id === alumnoId);
+            const habitacion = habitaciones.find(h => h.id === habitacionId);
+            const ocupantes = distribucion[habitacionId] || [];
+            
+            // Si la habitación ya tiene ocupantes, usar SU género (no el del tab activo)
+            let generoEsperado = generoRequerido;
+            if (habitacion.tipo === 'HDA' && ocupantes.length > 0) {
+                const primerOcupante = alumnos.find(a => a.id === ocupantes[0]);
+                if (primerOcupante) generoEsperado = primerOcupante.genero;
+            }
+            
+            if (habitacion.tipo === 'HDA' && alumno.genero !== generoEsperado) {
+                alert('❌ Solo ' + (generoEsperado === 'M' ? 'hombres' : 'mujeres') + ' en esta habitación');
+                return;
+            }
+            
+            if (!distribucion[habitacionId]) {
+                distribucion[habitacionId] = [];
+            }
+            
+            if (distribucion[habitacionId].length < habitacion.capacidad) {
+                Object.keys(distribucion).forEach(habId => {
+                    distribucion[habId] = distribucion[habId].filter(id => id !== alumnoId);
+                });
+                
+                distribucion[habitacionId].push(alumnoId);
+                renderTodo();
+                guardarDatos();
+            } else {
+                alert('❌ Habitación llena');
+            }
+        }
+
+        function removerAlumno(habitacionId, alumnoId) {
+            distribucion[habitacionId] = distribucion[habitacionId].filter(id => id !== alumnoId);
+            renderTodo();
+            guardarDatos();
+        }
+
+        function actualizarStats() {
+            const hombresTotal = alumnos.filter(a => a.genero === 'M').length;
+            const mujeresTotal = alumnos.filter(a => a.genero === 'F').length;
+            
+            const hombresAsignados = Object.values(distribucion).flat().filter(id => {
+                const alumno = alumnos.find(a => a.id === id);
+                return alumno && alumno.genero === 'M';
+            }).length;
+            
+            const mujeresAsignadas = Object.values(distribucion).flat().filter(id => {
+                const alumno = alumnos.find(a => a.id === id);
+                return alumno && alumno.genero === 'F';
+            }).length;
+            
+            document.getElementById('hombres-asignados').textContent = hombresAsignados + '/' + hombresTotal;
+            document.getElementById('mujeres-asignadas').textContent = mujeresAsignadas + '/' + mujeresTotal;
+        }
+
+        function guardarDatos() {
+            localStorage.setItem('distribucion_habitaciones', JSON.stringify(distribucion));
+        }
+
+        function cargarDatosLocales() {
+            const json = localStorage.getItem('distribucion_habitaciones');
+            if (json) {
+                distribucion = JSON.parse(json);
+                renderTodo();
+            }
+        }
+
+        function limpiarTodo() {
+            if (confirm('¿Estás seguro?')) {
+                distribucion = {};
+                localStorage.removeItem('distribucion_habitaciones');
+                renderTodo();
+            }
+        }
+
+        // CLICK DERECHO PARA AGREGAR ALUMNOS
+        function abrirMenuAgregar(e, habitacionId, genero) {
+            e.preventDefault();
+            
+            const habitacion = habitaciones.find(h => h.id === habitacionId);
+            if (!habitacion) return;
+            
+            const ocupantes = distribucion[habitacionId] || [];
+            
+            // Validar si hay espacio
+            if (ocupantes.length >= habitacion.capacidad) {
+                alert('❌ Habitación llena');
+                return;
+            }
+            
+            // Si la habitación ya tiene ocupantes, usar SU género (no el del tab activo)
+            let generoRequerido = genero;
+            if (habitacion.tipo === 'HDA' && ocupantes.length > 0) {
+                const primerOcupante = alumnos.find(a => a.id === ocupantes[0]);
+                if (primerOcupante) generoRequerido = primerOcupante.genero;
+            }
+            
+            // Obtener alumnos disponibles
+            const asignados = new Set(Object.values(distribucion).flat());
+            const alumnosDisponibles = alumnos.filter(a => {
+                if (habitacion.tipo === 'HDA') {
+                    return a.genero === generoRequerido && !asignados.has(a.id);
+                }
+                return !asignados.has(a.id);
+            });
+            
+            if (alumnosDisponibles.length === 0) {
+                alert('No hay alumnos disponibles');
+                return;
+            }
+            
+            // Mostrar modal con lista
+            mostrarModalAgregar(habitacionId, alumnosDisponibles);
+        }
+
+        function mostrarModalAgregar(habitacionId, alumnos) {
+            let html = '<div class="lista-alumnos-agregar">';
+            alumnos.forEach(a => {
+                html += `<div class="alumno-disponible" onclick="agregarAlumnoAHabitacion(${a.id}, '${habitacionId}')">
+                    ${a.nombre} <span style="font-size:11px; color:#999">(${a.grado})</span>
+                </div>`;
+            });
+            html += '</div>';
+            
+            document.getElementById('modalContenido').innerHTML = html;
+            document.getElementById('agregarModal').style.display = 'flex';
+        }
+
+        function agregarAlumnoAHabitacion(alumnoId, habitacionId) {
+            const habitacion = habitaciones.find(h => h.id === habitacionId);
+            
+            // Crear array si no existe
+            if (!distribucion[habitacionId]) {
+                distribucion[habitacionId] = [];
+            }
+            
+            const ocupantes = distribucion[habitacionId];
+            
+            if (ocupantes.length < habitacion.capacidad) {
+                // Remover de otras habitaciones
+                Object.keys(distribucion).forEach(habId => {
+                    distribucion[habId] = distribucion[habId].filter(id => id !== alumnoId);
+                });
+                
+                // Agregar a esta habitación
+                if (!distribucion[habitacionId]) {
+                    distribucion[habitacionId] = [];
+                }
+                distribucion[habitacionId].push(alumnoId);
+                
+                console.log('✅ Alumno agregado:', alumnoId, 'a', habitacionId);
+                console.log('Distribución:', distribucion);
+                
+                renderTodo();
+                guardarDatos();
+                document.getElementById('agregarModal').style.display = 'none';
+            } else {
+                alert('❌ Habitación llena');
+            }
+        }
+
+        function cerrarModalAgregar() {
+            document.getElementById('agregarModal').style.display = 'none';
+        }
+
+        function descargarJSON() {
+            const json = JSON.stringify(distribucion, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `distribucion_habitaciones_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function cargarJSON() {
+            document.getElementById('fileInput').click();
+        }
+
+        function procesarJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const datos = JSON.parse(e.target.result);
+                    distribucion = datos;
+                    localStorage.setItem('distribucion_habitaciones', JSON.stringify(distribucion));
+                    renderTodo();
+                    alert('✅ Datos cargados desde archivo');
+                } catch (error) {
+                    alert('❌ Error: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function mostrarJSON() {
+            const json = JSON.stringify(distribucion, null, 2);
+            document.getElementById('jsonText').value = json;
+            document.getElementById('jsonModal').style.display = 'block';
+        }
+
+        function exportarExcel() {
+            // Construir filas
+            const rows = [['N°', 'Apellidos y Nombres', 'Sección', 'Rol', 'Habitación', 'Tipo', 'Compañeros']];
+            let n = 1;
+
+            // Ordenar por habitación
+            Object.keys(distribucion).sort().forEach(habId => {
+                const hab = habitaciones.find(h => h.id === habId);
+                const tipo = hab ? hab.tipo : '';
+                const ocupantes = distribucion[habId];
+
+                ocupantes.forEach(id => {
+                    const alumno = alumnos.find(a => a.id === id);
+                    if (!alumno) return;
+
+                    const companeros = ocupantes
+                        .filter(cid => cid !== id)
+                        .map(cid => {
+                            const c = alumnos.find(a => a.id === cid);
+                            return c ? c.nombre : '';
+                        }).join(' / ');
+
+                    rows.push([n++, alumno.nombre, alumno.grado, alumno.rol, habId, tipo, companeros]);
+                });
+            });
+
+            // Generar CSV con BOM para Excel
+            const bom = '\uFEFF';
+            const csv = bom + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Distribucion_Habitaciones_Admin.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function cerrarModal() {
+            document.getElementById('jsonModal').style.display = 'none';
+        }
+
+        function copiarJSON() {
+            document.getElementById('jsonText').select();
+            document.execCommand('copy');
+            alert('✅ Copiado');
+        }
+
+        window.onclick = function(e) {
+            const modal = document.getElementById('jsonModal');
+            if (e.target === modal) modal.style.display = 'none';
+        }
+
+        // PROTECCIÓN DE ACCESO
+        const PASSWORD_ADMIN = "admin2026";
+
+        function verificarAccesoAdmin() {
+            const acceso = localStorage.getItem('admin_acceso');
+            if (acceso === 'ok') return true;
+
+            const clave = prompt("🔐 Ingresa la contraseña de Admin:");
+            if (clave === PASSWORD_ADMIN) {
+                localStorage.setItem('admin_acceso', 'ok');
+                return true;
+            } else {
+                document.body.innerHTML = `
+                    <div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#667eea; font-family:sans-serif;">
+                        <div style="background:white; padding:40px; border-radius:16px; text-align:center;">
+                            <h2>❌ Acceso Denegado</h2>
+                            <p>Contraseña incorrecta.</p>
+                            <a href="index.html" style="color:#667eea;">← Volver al inicio</a>
+                        </div>
+                    </div>`;
+                return false;
+            }
+        }
+
+        if (verificarAccesoAdmin()) {
+            init();
+        }
+    </script>
+</body>
+</html>
