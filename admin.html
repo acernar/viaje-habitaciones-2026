@@ -540,7 +540,7 @@
             { id: 'HDA_22', numero: 'HDA_22', capacidad: 2, tipo: 'HDA' },
             { id: 'HDA_23', numero: 'HDA_23', capacidad: 2, tipo: 'HDA' },
             { id: 'HDA_24', numero: 'HDA_24', capacidad: 2, tipo: 'HDA' },
-            { id: 'HTA_02', numero: 'HTA_02', capacidad: 3, tipo: 'HDA' },
+            { id: 'HTA_02', numero: 'HTA_02', capacidad: 3, tipo: 'HTA' },
             { id: 'HDA_25', numero: 'HDA_25', capacidad: 2, tipo: 'HDA' },
             { id: 'HDA_26', numero: 'HDA_26', capacidad: 2, tipo: 'HDA' },
             { id: 'HM-01', numero: 'HM-01', capacidad: 2, tipo: 'HM' },
@@ -550,7 +550,7 @@
             { id: 'HDP_01', numero: 'HDP_01', capacidad: 3, tipo: 'HDP' },
             { id: 'HDP_02', numero: 'HDP_02', capacidad: 2, tipo: 'HDP' },
             { id: 'HDP_03', numero: 'HDP_03', capacidad: 2, tipo: 'HDP' },
-            { id: 'HTA_01', numero: 'HTA_01', capacidad: 3, tipo: 'HDA' }
+            { id: 'HTA_01', numero: 'HTA_01', capacidad: 3, tipo: 'HTA' }
         ];
 
         let distribucion = {};
@@ -577,7 +577,7 @@
         }
 
         function init() {
-            document.getElementById('total-hda').textContent = habitaciones.filter(h => h.tipo === 'HDA').length;
+            document.getElementById('total-hda').textContent = habitaciones.filter(h => h.tipo === 'HDA' || h.tipo === 'HTA').length;
             cargarDatosGitHub();
         }
 
@@ -618,7 +618,7 @@
         function renderHabitacionesHDA() {
             const genero = generoActual === 'hombres' ? 'M' : 'F';
             const contenedorId = generoActual === 'hombres' ? 'hda-hombres' : 'hda-mujeres';
-            const habitacionesHDA = habitaciones.filter(h => h.tipo === 'HDA');
+            const habitacionesHDA = habitaciones.filter(h => h.tipo === 'HDA' || h.tipo === 'HTA');
             
             let html = '';
             habitacionesHDA.forEach(hab => {
