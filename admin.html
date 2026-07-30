@@ -602,7 +602,7 @@
         function renderAlumnos() {
             const asignados = new Set(Object.values(distribucion).flat());
             const genero = generoActual === 'hombres' ? 'M' : 'F';
-            const sinAsignar = alumnos.filter(a => a.genero === genero && !asignados.has(a.id));
+            const sinAsignar = alumnos.filter(a => a.genero === genero && !asignados.has(a.id) && a.rol === 'Alumno');
             
             const contenedorId = generoActual === 'hombres' ? 'alumnos-hombres' : 'alumnos-mujeres';
             let html = '';
