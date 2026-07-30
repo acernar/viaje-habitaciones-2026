@@ -551,7 +551,6 @@
             { id: 'HDP_01', numero: 'HDP_01', capacidad: 2, tipo: 'HDP' },
             { id: 'HTP_01', numero: 'HTP_01', capacidad: 3, tipo: 'HTP' },
             { id: 'HDP_02', numero: 'HDP_02', capacidad: 2, tipo: 'HDP' },
-            { id: 'HDP_03', numero: 'HDP_03', capacidad: 2, tipo: 'HDP' },
             { id: 'HTA_01', numero: 'HTA_01', capacidad: 3, tipo: 'HTA' }
         ];
 
@@ -561,7 +560,7 @@
         async function cargarDatosGitHub() {
             try {
                 document.getElementById('syncStatus').textContent = '🔄 Cargando desde GitHub...';
-                const response = await fetch(GITHUB_URL);
+                const response = await fetch(GITHUB_URL + "?t=" + Date.now());
                 if (response.ok) {
                     distribucion = await response.json();
                     localStorage.setItem('distribucion_habitaciones', JSON.stringify(distribucion));
